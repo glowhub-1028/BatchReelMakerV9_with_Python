@@ -1,0 +1,6 @@
+PyQt5==5.15.9
+moviepy==1.0.3
+ffmpeg-python==0.2.0
+Pillow>=10.0.0
+numpy>=1.24.0
+pyinstaller>=6.0.0
