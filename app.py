@@ -174,8 +174,24 @@ class VideoProcessor(QThread):
                     self.status_updated.emit(f"Skipping overlay (invalid): {overlay['path']}")
                     continue
 
-                # Create overlay clip and ensure it fits inside the base video
-                overlay_clip = ImageClip(overlay['path']).set_duration(overlay['duration'])
+                # Create overlay clip with transparency support and ensure it fits inside the base video
+                overlay_clip = (ImageClip(overlay['path'], transparent=True)
+                               .set_duration(overlay['duration'])
+                               .set_start(overlay['start_time'])
+                               .set_position(("center", "center")))
+                
+                # Apply fade-in and fade-out effects to the overlay's opacity mask
+                # This creates smooth transparency transitions without affecting the RGB content
+                if overlay_clip.mask is not None:
+                    # Apply fades to the existing mask
+                    overlay_clip = overlay_clip.set_mask(overlay_clip.mask.fadein(5).fadeout(5))
+                else:
+                    # Create a mask if none exists and apply fades
+                    from moviepy.video.VideoClip import VideoClip
+                    mask_clip = VideoClip(lambda t: 1.0, duration=overlay['duration'])
+                    mask_clip = mask_clip.fadein(5).fadeout(5)
+                    overlay_clip = overlay_clip.set_mask(mask_clip)
+                
                 ow, oh = overlay_clip.size
                 
                 # Additional memory optimization: limit overlay size
@@ -193,19 +209,10 @@ class VideoProcessor(QThread):
                 if scale < 1.0:
                     overlay_clip = overlay_clip.resize(scale)
                     self.status_updated.emit(f"Resized overlay to fit: {overlay['path']} (scale={scale:.2f})")
-                overlay_clip = overlay_clip.set_start(overlay['start_time']).set_position('center')
                 
-                # Apply fade-in and fade-out to overlays.
-                # Target is 5s in/out, but if the overlay is shorter than 10s
-                # we scale the fades to half its duration to avoid overlap.
-                fade_duration = min(5.0, overlay['duration'] / 2.0)
-                if fade_duration > 0:
-                    # Use standard fadein/fadeout effects
-                    overlay_clip = overlay_clip.fadein(fade_duration)
-                    overlay_clip = overlay_clip.fadeout(fade_duration)
-                    self.status_updated.emit(
-                        f"Applied {fade_duration:.2f}s fade in/out to overlay: {overlay['path']}"
-                    )
+                self.status_updated.emit(
+                    f"Overlay added with fade effects: {overlay['path']}"
+                )
                 
                 overlay_clips.append(overlay_clip)
                 
