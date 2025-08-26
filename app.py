@@ -306,6 +306,10 @@ class BatchReelMakerV9(QMainWindow):
         self.setWindowTitle("BatchReelMaker V9")
         self.setGeometry(100, 100, 1000, 800)
         
+        # Set application icon
+        icon = QIcon("icon.ico")
+        self.setWindowIcon(icon)
+        
         # Create central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
