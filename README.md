@@ -78,6 +78,7 @@ Use the table to configure overlays:
 
 ### Images
 - PNG, JPG, JPEG, BMP, GIF
+- **PNG with transparency** recommended for overlays for best fade effects
 
 ### Audio
 - MP3, WAV, M4A, AAC
